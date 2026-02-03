@@ -1,0 +1,505 @@
+/* Stardew Valley-inspired Wizard Training App Styles */
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--panel-color);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px var(--shadow);
+  overflow: hidden;
+  border: 3px solid var(--border-color);
+}
+
+header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 20px;
+  text-align: center;
+  border-bottom: 3px solid var(--border-color);
+}
+
+header h1 {
+  font-size: 2.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  margin-bottom: 10px;
+}
+
+.screen {
+  padding: 30px;
+  min-height: 500px;
+}
+
+/* Character Creation Screen */
+.character-creation {
+  text-align: center;
+}
+
+.wizard-preview {
+  margin: 30px 0;
+}
+
+.wizard-avatar {
+  font-size: 8rem;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px var(--shadow);
+}
+
+.character-creation input {
+  font-size: 1.2rem;
+  padding: 12px 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  margin: 20px 0;
+  width: 300px;
+  max-width: 80%;
+  background: white;
+  box-shadow: inset 0 2px 4px var(--shadow);
+}
+
+.character-creation button {
+  background: linear-gradient(135deg, var(--accent-color), #228B22);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px var(--shadow);
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.character-creation button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px var(--shadow);
+}
+
+.character-creation button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Main Game Screen */
+.game-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 20px;
+  border-bottom: 3px solid var(--border-color);
+}
+
+.wizard-info h2 {
+  margin-bottom: 15px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.stat {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-align: center;
+}
+
+.stat-label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Game Content */
+.game-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  padding: 30px;
+}
+
+.tasks-section, .spells-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 2px solid var(--border-color);
+}
+
+.tasks-section h3, .spells-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 1.5rem;
+  border-bottom: 2px solid var(--secondary-color);
+  padding-bottom: 10px;
+}
+
+/* Task Items */
+.task-item {
+  background: var(--panel-color);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.task-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadow);
+}
+
+.task-info {
+  flex-grow: 1;
+}
+
+.task-name {
+  font-weight: bold;
+  color: var(--text-color);
+  margin-bottom: 5px;
+}
+
+.task-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.task-rewards {
+  font-size: 0.8rem;
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.task-btn {
+  background: linear-gradient(135deg, var(--accent-color), #228B22);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.task-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.task-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tab-button {
+  background: rgba(255,255,255,0.12);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tab-active {
+  background: linear-gradient(135deg, var(--accent-color), #2e8b57);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Cooldown timer */
+.cooldown-timer {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #b71c1c;
+  font-weight: bold;
+}
+
+.battlegrounds-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 2px solid var(--border-color);
+}
+
+.idle-placeholder {
+  margin-top: 12px;
+  text-align: center;
+  color: #444;
+}
+
+.pixel-arena {
+  font-family: monospace;
+  padding: 20px;
+  border: 4px dashed #ccc;
+  display: inline-block;
+  border-radius: 8px;
+}
+
+/* Spell Items */
+.spell-item {
+  background: var(--panel-color);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.spell-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadow);
+}
+
+.spell-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.spell-name {
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 5px;
+}
+
+.spell-description {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.spell-locked {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+/* Task Management Styles */
+.tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.add-task-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.add-task-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+/* Add Task Form */
+.add-task-form {
+  background: var(--panel-color);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--text-color);
+}
+
+.add-task-form input,
+.add-task-form select,
+.add-task-form textarea {
+  padding: 8px 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  background: white;
+  font-family: inherit;
+}
+
+.add-task-form input:focus,
+.add-task-form select:focus,
+.add-task-form textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(50, 205, 50, 0.2);
+}
+
+.add-task-form textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, var(--accent-color), #228B22);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Task Item Updates */
+.task-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.task-item {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.task-item.editing {
+  background: var(--panel-color);
+  border: 2px solid var(--accent-color);
+}
+
+.task-info {
+  margin-bottom: 10px;
+}
+
+.task-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.task-controls {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.edit-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-btn:hover {
+  background: #1976D2;
+  transform: scale(1.1);
+}
+
+.delete-btn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  background: #ff5252;
+  transform: scale(1.1);
+}
+
+.recurrence-info {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+/* Edit Task Form */
+.edit-task-form {
+  width: 100%;
+}
+
+.edit-task-form .form-row {
+  margin-bottom: 10px;
+}
+
+.edit-task-form .form-actions {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tasks-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .add-task-btn {
+    align-self: flex-end;
+  }
+
+  .task-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+}

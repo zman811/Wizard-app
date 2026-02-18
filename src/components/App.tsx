@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Wizard, Task, Spell } from '../types';
-import { setupSpells, setupTasks, createWizard, completeTask, saveGameData, loadGameData, isTaskOnCooldown, addCustomTask, deleteTask } from '../gameLogic';
+import { setupSpells, setupTasks, createWizard, completeTask, saveGameData, loadGameData, isTaskOnCooldown, addCustomTask, deleteTask, isTaskTimerComplete, getWizardNames, switchWizard, clearWizardData, clearAllGameData } from '../gameLogic';
 import CharacterCreation from './CharacterCreation';
 import GameScreen from './GameScreen';
+import WizardMenu from './WizardMenu';
 import './App.css';
 
 const App: React.FC = () => {
@@ -11,12 +12,14 @@ const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [spells] = useState<Spell[]>(setupSpells());
   const [currentScreen, setCurrentScreen] = useState<'character-creation' | 'main-game'>('character-creation');
+  const [wizardNames, setWizardNames] = useState<string[]>([]);
 
   // Load game data on component mount
   useEffect(() => {
     const { wizard: loadedWizard, tasks: loadedTasks } = loadGameData();
     setWizard(loadedWizard);
     setTasks(loadedTasks);
+    setWizardNames(getWizardNames());
 
     if (loadedWizard) {
       setCurrentScreen('main-game');
@@ -30,11 +33,49 @@ const App: React.FC = () => {
     }
   }, [wizard, tasks]);
 
+  // Check for completed timers every second and auto-complete tasks
+  useEffect(() => {
+    const timerCheckInterval = setInterval(() => {
+      setTasks(prevTasks => {
+        setWizard(prevWizard => {
+          if (!prevWizard) return prevWizard;
+
+          let wizardUpdated = prevWizard;
+          const newTasks = prevTasks.map(task => {
+            if (task.timerActive && isTaskTimerComplete(task)) {
+              // Auto-complete task when timer finishes
+              const { wizard: updatedWizard, tasks: updatedTasks } = completeTask(
+                wizardUpdated,
+                task,
+                prevTasks
+              );
+              wizardUpdated = updatedWizard;
+              // Find the completed task and disable timer
+              const completedTask = updatedTasks.find(t => t.id === task.id);
+              if (completedTask) {
+                return { ...completedTask, timerActive: false };
+              }
+              return task;
+            }
+            return task;
+          });
+
+          setTasks(newTasks);
+          return wizardUpdated;
+        });
+        return prevTasks;
+      });
+    }, 500); // Check every 500ms
+
+    return () => clearInterval(timerCheckInterval);
+  }, []);
+
   // Handle wizard creation
   const handleCreateWizard = (name: string) => {
     const newWizard = createWizard(name);
     setWizard(newWizard);
     setTasks(setupTasks());
+    setWizardNames([...wizardNames, name]);
     setCurrentScreen('main-game');
   };
 
@@ -57,7 +98,9 @@ const App: React.FC = () => {
     mindReward?: number,
     recurrenceType: 'daily' | 'weekly' | 'none' = 'daily',
     icon: string = '📝',
-    cooldownHours: number = 24
+    cooldownHours: number = 24,
+    hasTimer: boolean = false,
+    timerDurationMinutes: number = 0
   ) => {
     const updatedTasks = addCustomTask(
       tasks,
@@ -69,7 +112,9 @@ const App: React.FC = () => {
       mindReward,
       recurrenceType,
       icon,
-      cooldownHours
+      cooldownHours,
+      hasTimer,
+      timerDurationMinutes
     );
     setTasks(updatedTasks);
   };
@@ -88,6 +133,41 @@ const App: React.FC = () => {
     setTasks(updatedTasks);
   };
 
+  // Handle switching to a different wizard
+  const handleSwitchWizard = (wizardName: string) => {
+    const { wizard: loadedWizard, tasks: loadedTasks } = switchWizard(wizardName);
+    setWizard(loadedWizard);
+    setTasks(loadedTasks);
+    if (loadedWizard) {
+      setCurrentScreen('main-game');
+    }
+  };
+
+  // Handle creating a new wizard
+  const handleNewWizard = () => {
+    setCurrentScreen('character-creation');
+  };
+
+  // Handle clearing a wizard's data
+  const handleClearWizard = (wizardName: string) => {
+    clearWizardData(wizardName);
+    const newWizardNames = getWizardNames();
+    setWizardNames(newWizardNames);
+
+    if (wizard && wizard.name === wizardName) {
+      // Cleared current wizard, load first available or go to character creation
+      if (newWizardNames.length > 0) {
+        const { wizard: loadedWizard, tasks: loadedTasks } = switchWizard(newWizardNames[0]);
+        setWizard(loadedWizard);
+        setTasks(loadedTasks);
+      } else {
+        setWizard(null);
+        setTasks([]);
+        setCurrentScreen('character-creation');
+      }
+    }
+  };
+
   return (
     <div className="app">
       {currentScreen === 'character-creation' && (
@@ -95,15 +175,24 @@ const App: React.FC = () => {
       )}
 
       {currentScreen === 'main-game' && wizard && (
-        <GameScreen
-          wizard={wizard}
-          tasks={tasks}
-          spells={spells}
-          onCompleteTask={handleCompleteTask}
-          onAddTask={handleAddTask}
-          onDeleteTask={handleDeleteTask}
-          onEditTask={handleEditTask}
-        />
+        <>
+          <WizardMenu
+            currentWizardName={wizard.name}
+            wizardNames={wizardNames}
+            onSwitchWizard={handleSwitchWizard}
+            onNewWizard={handleNewWizard}
+            onClearWizard={handleClearWizard}
+          />
+          <GameScreen
+            wizard={wizard}
+            tasks={tasks}
+            spells={spells}
+            onCompleteTask={handleCompleteTask}
+            onAddTask={handleAddTask}
+            onDeleteTask={handleDeleteTask}
+            onEditTask={handleEditTask}
+          />
+        </>
       )}
     </div>
   );

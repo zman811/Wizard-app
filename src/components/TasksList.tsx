@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Task } from '../types';
-import { isTaskOnCooldown, getTaskCooldownRemaining } from '../gameLogic';
+import { isTaskOnCooldown, getTaskCooldownRemaining, getTaskTimerRemaining, isTaskTimerComplete } from '../gameLogic';
 
 interface TasksListProps {
   tasks: Task[];
@@ -14,7 +14,9 @@ interface TasksListProps {
     mindReward?: number,
     recurrenceType?: 'daily' | 'weekly' | 'none',
     icon?: string,
-    cooldownHours?: number
+    cooldownHours?: number,
+    hasTimer?: boolean,
+    timerDurationMinutes?: number
   ) => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask?: (
@@ -41,7 +43,9 @@ const TasksList: React.FC<TasksListProps> = ({
     mindReward: 0,
     recurrenceType: 'daily' as 'daily' | 'weekly' | 'none',
     icon: '📝',
-    cooldownHours: 24
+    cooldownHours: 24,
+    hasTimer: false,
+    timerDurationMinutes: 0
   });
   const [editTask, setEditTask] = useState({
     name: '',
@@ -52,7 +56,9 @@ const TasksList: React.FC<TasksListProps> = ({
     mindReward: 0,
     recurrenceType: 'daily' as 'daily' | 'weekly' | 'none',
     icon: '📝',
-    cooldownHours: 24
+    cooldownHours: 24,
+    hasTimer: false,
+    timerDurationMinutes: 0
   });
 
   // Tick to refresh cooldown timers every second
@@ -63,7 +69,7 @@ const TasksList: React.FC<TasksListProps> = ({
   }, []);
 
   // Handle input changes for new task form
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setNewTask(prev => ({
       ...prev,
       [field]: value
@@ -84,7 +90,9 @@ const TasksList: React.FC<TasksListProps> = ({
       newTask.mindReward || undefined,
       newTask.recurrenceType,
       newTask.icon,
-      newTask.cooldownHours
+      newTask.cooldownHours,
+      newTask.hasTimer,
+      newTask.timerDurationMinutes
     );
 
     // Reset form
@@ -97,7 +105,9 @@ const TasksList: React.FC<TasksListProps> = ({
       mindReward: 0,
       recurrenceType: 'daily',
       icon: '📝',
-      cooldownHours: 24
+      cooldownHours: 24,
+      hasTimer: false,
+      timerDurationMinutes: 0
     });
     setShowAddForm(false);
   };
@@ -114,7 +124,9 @@ const TasksList: React.FC<TasksListProps> = ({
       mindReward: task.rewards.mind || 0,
       recurrenceType: task.recurrenceType || 'daily',
       icon: task.icon,
-      cooldownHours: task.cooldownHours || 0
+      cooldownHours: task.cooldownHours || 0,
+      hasTimer: task.hasTimer || false,
+      timerDurationMinutes: task.timerDurationMinutes || 0
     });
   };
 
@@ -130,7 +142,9 @@ const TasksList: React.FC<TasksListProps> = ({
       mindReward: 0,
       recurrenceType: 'daily',
       icon: '📝',
-      cooldownHours: 24
+      cooldownHours: 24,
+      hasTimer: false,
+      timerDurationMinutes: 0
     });
   };
 
@@ -149,14 +163,16 @@ const TasksList: React.FC<TasksListProps> = ({
       },
       recurrenceType: editTask.recurrenceType,
       icon: editTask.icon,
-      cooldownHours: editTask.cooldownHours
+      cooldownHours: editTask.cooldownHours,
+      hasTimer: editTask.hasTimer,
+      timerDurationMinutes: editTask.timerDurationMinutes
     });
 
     handleCancelEdit();
   };
 
   // Handle edit input changes
-  const handleEditInputChange = (field: string, value: string | number) => {
+  const handleEditInputChange = (field: string, value: string | number | boolean) => {
     setEditTask(prev => ({
       ...prev,
       [field]: value
@@ -271,6 +287,29 @@ const TasksList: React.FC<TasksListProps> = ({
                 <option value="none">One-time</option>
               </select>
             </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Enable Timer?</label>
+              <input
+                type="checkbox"
+                checked={newTask.hasTimer}
+                onChange={(e) => handleInputChange('hasTimer', e.target.checked)}
+              />
+            </div>
+            {newTask.hasTimer && (
+              <div className="form-group">
+                <label>Timer Duration (minutes):</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="480"
+                  value={newTask.timerDurationMinutes}
+                  onChange={(e) => handleInputChange('timerDurationMinutes', parseInt(e.target.value) || 0)}
+                />
+              </div>
+            )}
           </div>
 
                   <div className="form-row">
@@ -399,6 +438,29 @@ const TasksList: React.FC<TasksListProps> = ({
                     </div>
                   </div>
 
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Enable Timer?</label>
+                      <input
+                        type="checkbox"
+                        checked={editTask.hasTimer}
+                        onChange={(e) => handleEditInputChange('hasTimer', e.target.checked)}
+                      />
+                    </div>
+                    {editTask.hasTimer && (
+                      <div className="form-group">
+                        <label>Timer Duration (minutes):</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="480"
+                          value={editTask.timerDurationMinutes}
+                          onChange={(e) => handleEditInputChange('timerDurationMinutes', parseInt(e.target.value) || 0)}
+                        />
+                      </div>
+                    )}
+                  </div>
+
                   <div className="form-actions">
                     <button type="submit" className="submit-btn">Save Changes</button>
                     <button type="button" onClick={handleCancelEdit}>Cancel</button>
@@ -415,6 +477,19 @@ const TasksList: React.FC<TasksListProps> = ({
                   {task.icon} {task.name}
                 </div>
                 <div className="task-description">{task.description}</div>
+
+                {/* Timer Display */}
+                {task.hasTimer && task.timerDurationMinutes ? (
+                  <div className="task-timer-section">
+                    {task.timerActive ? (
+                      <div className="timer-display">
+                        <span className="timer-label">⏱️ Timer:</span>
+                        <span className="timer-countdown">{formatRemaining(getTaskTimerRemaining(task))}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <div className="task-rewards">
                   Rewards: {task.rewards.experience} XP
                   {task.rewards.mana ? `, +${task.rewards.mana} Mana` : ''}
@@ -422,19 +497,59 @@ const TasksList: React.FC<TasksListProps> = ({
                   {task.recurrenceType && task.recurrenceType !== 'none' && (
                     <span className="recurrence-info"> • {task.recurrenceType}</span>
                   )}
-                  {isOnCooldown && remainingMs > 0 && (
-                    <div className="cooldown-timer">Back in: {formatRemaining(remainingMs)}</div>
-                  )}
                 </div>
+                {isOnCooldown && remainingMs > 0 && (
+                  <div className="cooldown-timer">Back in: {formatRemaining(remainingMs)}</div>
+                )}
               </div>
               <div className="task-actions">
-                <button
-                  className="task-btn"
-                  disabled={!canComplete}
-                  onClick={() => onCompleteTask(task)}
-                >
-                  {task.completed ? 'Completed' : isOnCooldown ? 'Cooldown' : 'Complete'}
-                </button>
+                {task.hasTimer && task.timerDurationMinutes ? (
+                  <>
+                    {task.timerActive ? (
+                      <button
+                        className="timer-btn active"
+                        onClick={() => {
+                          if (onEditTask) {
+                            onEditTask(task.id, { timerActive: false });
+                          }
+                        }}
+                      >
+                        ⏸️ Stop Timer
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          className="timer-btn"
+                          onClick={() => {
+                            if (onEditTask) {
+                              onEditTask(task.id, {
+                                timerActive: true,
+                                timerStartTime: new Date()
+                              });
+                            }
+                          }}
+                        >
+                          ▶️ Start Timer
+                        </button>
+                        <button
+                          className="task-btn"
+                          disabled={!canComplete}
+                          onClick={() => onCompleteTask(task)}
+                        >
+                          {task.completed ? 'Completed' : isOnCooldown ? 'Cooldown' : 'Complete'}
+                        </button>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <button
+                    className="task-btn"
+                    disabled={!canComplete}
+                    onClick={() => onCompleteTask(task)}
+                  >
+                    {task.completed ? 'Completed' : isOnCooldown ? 'Cooldown' : 'Complete'}
+                  </button>
+                )}
                 <div className="task-controls">
                   <button
                     className="edit-btn"

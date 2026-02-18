@@ -142,7 +142,9 @@ export function addCustomTask(
   mindReward?: number,
   recurrenceType: 'daily' | 'weekly' | 'none' = 'daily',
   icon: string = '📝',
-  cooldownHours: number = 24
+  cooldownHours: number = 24,
+  hasTimer: boolean = false,
+  timerDurationMinutes: number = 0
 ): Task[] {
   const newTask: Task = {
     id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -159,7 +161,10 @@ export function addCustomTask(
     cooldownHours,
     isCustom: true,
     recurrenceType,
-    createdAt: new Date()
+    createdAt: new Date(),
+    hasTimer,
+    timerDurationMinutes: hasTimer ? timerDurationMinutes : undefined,
+    timerActive: false
   };
 
   return [...tasks, newTask];
@@ -180,6 +185,23 @@ export function getTaskCooldownRemaining(task: Task): number {
   const cooldownMs = task.cooldownHours * 60 * 60 * 1000;
   const remaining = cooldownMs - timeSinceCompleted;
   return remaining > 0 ? remaining : 0;
+}
+
+// Get remaining timer in milliseconds for a task (0 if timer complete or no timer)
+export function getTaskTimerRemaining(task: Task): number {
+  if (!task.timerActive || !task.timerStartTime || !task.timerDurationMinutes) return 0;
+
+  const now = new Date();
+  const timerElapsed = now.getTime() - task.timerStartTime.getTime();
+  const timerTotalMs = task.timerDurationMinutes * 60 * 1000;
+  const remaining = timerTotalMs - timerElapsed;
+  return remaining > 0 ? remaining : 0;
+}
+
+// Check if a task's timer has finished
+export function isTaskTimerComplete(task: Task): boolean {
+  if (!task.timerActive || !task.timerStartTime || !task.timerDurationMinutes) return false;
+  return getTaskTimerRemaining(task) <= 0;
 }
 
 // Check if a task should reset based on its recurrence
@@ -328,26 +350,44 @@ export function checkSpellUnlocks(wizard: Wizard, completedTaskId: string, tasks
   return updatedWizard;
 }
 
+// Multi-wizard support types
+interface WizardProfile {
+  wizard: Wizard;
+  tasks: Task[];
+}
+
+interface AllWizardData {
+  currentWizardName: string;
+  wizards: { [wizardName: string]: WizardProfile };
+}
+
 // Save game data to localStorage
 export function saveGameData(wizard: Wizard, tasks: Task[]): void {
-  const gameData = {
+  const gameData: WizardProfile = {
     wizard: wizard,
     tasks: tasks.map(task => ({
       ...task,
-      lastCompleted: task.lastCompleted?.toISOString()
+      lastCompleted: task.lastCompleted?.toISOString() as any
     }))
   };
 
-  localStorage.setItem('wizardTrainingGame', JSON.stringify(gameData));
+  // Load all wizards data
+  const allData = getAllWizardsData();
+  allData.wizards[wizard.name] = gameData;
+  allData.currentWizardName = wizard.name;
+  localStorage.setItem('wizardTrainingGame', JSON.stringify(allData));
 }
 
 // Load game data from localStorage
 export function loadGameData(): { wizard: Wizard | null, tasks: Task[] } {
-  const savedData = localStorage.getItem('wizardTrainingGame');
-  if (!savedData) return { wizard: null, tasks: setupTasks() };
+  const allData = getAllWizardsData();
+
+  if (!allData.currentWizardName || !allData.wizards[allData.currentWizardName]) {
+    return { wizard: null, tasks: setupTasks() };
+  }
 
   try {
-    const gameData = JSON.parse(savedData);
+    const gameData = allData.wizards[allData.currentWizardName];
     const wizard = gameData.wizard;
 
     // Restore tasks with proper Date objects
@@ -365,4 +405,88 @@ export function loadGameData(): { wizard: Wizard | null, tasks: Task[] } {
     console.error('Failed to load game data:', error);
     return { wizard: null, tasks: setupTasks() };
   }
+}
+
+// Get all wizards data from localStorage
+export function getAllWizardsData(): AllWizardData {
+  const savedData = localStorage.getItem('wizardTrainingGame');
+
+  if (!savedData) {
+    return {
+      currentWizardName: '',
+      wizards: {}
+    };
+  }
+
+  try {
+    const data = JSON.parse(savedData);
+    // Handle legacy format (single wizard)
+    if (data.wizard && !data.wizards) {
+      return {
+        currentWizardName: data.wizard.name,
+        wizards: {
+          [data.wizard.name]: data
+        }
+      };
+    }
+    return data;
+  } catch (error) {
+    console.error('Failed to load all wizards data:', error);
+    return {
+      currentWizardName: '',
+      wizards: {}
+    };
+  }
+}
+
+// Get list of all wizard names
+export function getWizardNames(): string[] {
+  const allData = getAllWizardsData();
+  return Object.keys(allData.wizards);
+}
+
+// Switch to a different wizard
+export function switchWizard(wizardName: string): { wizard: Wizard | null, tasks: Task[] } {
+  const allData = getAllWizardsData();
+
+  if (!allData.wizards[wizardName]) {
+    return { wizard: null, tasks: setupTasks() };
+  }
+
+  allData.currentWizardName = wizardName;
+  localStorage.setItem('wizardTrainingGame', JSON.stringify(allData));
+
+  const gameData = allData.wizards[wizardName];
+  const wizard = gameData.wizard;
+
+  let tasks = gameData.tasks.map((task: any) => ({
+    ...task,
+    lastCompleted: task.lastCompleted ? new Date(task.lastCompleted) : undefined,
+    createdAt: task.createdAt ? new Date(task.createdAt) : undefined
+  }));
+
+  tasks = updateTasksForRecurrence(tasks);
+  return { wizard, tasks };
+}
+
+// Clear data for a specific wizard
+export function clearWizardData(wizardName: string): void {
+  const allData = getAllWizardsData();
+
+  if (allData.wizards[wizardName]) {
+    delete allData.wizards[wizardName];
+  }
+
+  // If we deleted the current wizard, switch to the first available
+  if (allData.currentWizardName === wizardName) {
+    const remainingWizards = Object.keys(allData.wizards);
+    allData.currentWizardName = remainingWizards.length > 0 ? remainingWizards[0] : '';
+  }
+
+  localStorage.setItem('wizardTrainingGame', JSON.stringify(allData));
+}
+
+// Clear all game data
+export function clearAllGameData(): void {
+  localStorage.removeItem('wizardTrainingGame');
 }

@@ -28,6 +28,10 @@ export interface Task {
   isCustom?: boolean; // Whether this is a user-created task
   recurrenceType?: 'daily' | 'weekly' | 'none'; // How often the task resets
   createdAt?: Date; // When the custom task was created
+  hasTimer?: boolean; // Whether this task has an active timer
+  timerDurationMinutes?: number; // Timer duration in minutes
+  timerStartTime?: Date; // When the timer was started
+  timerActive?: boolean; // Whether the timer is currently running
 }
 
 export interface Spell {

@@ -19,7 +19,9 @@ interface GameScreenProps {
     mindReward?: number,
     recurrenceType?: 'daily' | 'weekly' | 'none',
     icon?: string,
-    cooldownHours?: number
+    cooldownHours?: number,
+    hasTimer?: boolean,
+    timerDurationMinutes?: number
   ) => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask?: (taskId: string, updates: Partial<Task>) => void;

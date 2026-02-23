@@ -170,9 +170,8 @@ export function addCustomTask(
   return [...tasks, newTask];
 }
 
-// Delete a task (only custom tasks can be deleted)
+// Delete a task by ID
 export function deleteTask(tasks: Task[], taskId: string): Task[] {
-  // Allow deletion of any task (user requested editable/deletable for all tasks)
   return tasks.filter(t => t.id !== taskId);
 }
 
@@ -349,6 +348,10 @@ export function checkSpellUnlocks(wizard: Wizard, completedTaskId: string, tasks
 
   return updatedWizard;
 }
+
+
+// TODO Check loading of game data functions for any overlaps or redundancies with the new multi-wizard data structure and refactor as needed.
+
 
 // Multi-wizard support types
 interface WizardProfile {

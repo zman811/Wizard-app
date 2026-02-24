@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Wizard, Task, Spell } from '../types';
-import { setupSpells, setupTasks, createWizard, completeTask, saveGameData, loadGameData, isTaskOnCooldown, addCustomTask, deleteTask, isTaskTimerComplete, getWizardNames, switchWizard, clearWizardData, clearAllGameData } from '../gameLogic';
+import { setupSpells, setupTasks, createWizard, completeTask, saveGameData, loadGameData, isTaskOnCooldown, addCustomTask, deleteTask, isTaskTimerComplete, getWizardNames, switchWizard, clearWizardData, clearAllGameData, addCustomGoalToWizard, claimGoal, deleteGoalFromWizard } from '../gameLogic';
 import CharacterCreation from './CharacterCreation';
 import GameScreen from './GameScreen';
 import WizardMenu from './WizardMenu';
@@ -143,6 +143,25 @@ const App: React.FC = () => {
     }
   };
 
+  // Goals handlers
+  const handleAddGoal = (name: string, description: string, rewards: { experience: number; mana?: number; mind?: number; }) => {
+    if (!wizard) return;
+    const updatedWizard = addCustomGoalToWizard(wizard, name, description, rewards);
+    setWizard(updatedWizard);
+  };
+
+  const handleClaimGoal = (goalId: string) => {
+    if (!wizard) return;
+    const updatedWizard = claimGoal(wizard, goalId, tasks);
+    setWizard(updatedWizard);
+  };
+
+  const handleDeleteGoal = (goalId: string) => {
+    if (!wizard) return;
+    const updatedWizard = deleteGoalFromWizard(wizard, goalId);
+    setWizard(updatedWizard);
+  };
+
   // Handle creating a new wizard
   const handleNewWizard = () => {
     setCurrentScreen('character-creation');
@@ -191,6 +210,9 @@ const App: React.FC = () => {
             onAddTask={handleAddTask}
             onDeleteTask={handleDeleteTask}
             onEditTask={handleEditTask}
+            onClaimGoal={handleClaimGoal}
+            onAddGoal={handleAddGoal}
+            onDeleteGoal={handleDeleteGoal}
           />
         </>
       )}

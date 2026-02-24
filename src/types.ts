@@ -9,6 +9,7 @@ export interface Wizard {
   mind: number;
   maxMind: number;
   spells: string[];
+  goals?: Goal[];
 }
 
 export interface Task {
@@ -44,4 +45,21 @@ export interface Spell {
     tasksCompleted?: number;
     specialTask?: string;
   };
+}
+
+// Goals
+export interface Goal {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'totalTasks' | 'custom';
+  targetNumber?: number; // e.g., number of tasks to complete (only for built-in goals)
+  rewards: {
+    experience: number;
+    mana?: number;
+    mind?: number;
+  };
+  createdAt?: Date;
+  claimed?: boolean; // whether reward has been claimed
+  isCustom?: boolean;
 }

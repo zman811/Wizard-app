@@ -1,4 +1,5 @@
 import { Wizard, Task, Spell } from './types';
+import type { Goal } from './types';
 
 // Global game state
 let wizard: Wizard | null = null;
@@ -238,6 +239,162 @@ export function updateTasksForRecurrence(tasks: Task[]): Task[] {
     return task;
   });
 }
+
+// ------------------ Goals support ------------------
+
+// Helper: count completed tasks
+export function getCompletedTaskCount(tasks: Task[]): number {
+  return tasks.filter(t => t.completed).length;
+}
+
+// Built-in total-task goals
+export function getBuiltInGoals(): Goal[] {
+  return [
+    {
+      id: 'total-5',
+      name: 'First Five Tasks',
+      description: 'Complete 5 tasks total to earn a reward',
+      type: 'totalTasks',
+      targetNumber: 5,
+      rewards: { experience: 100, mana: 5 },
+      claimed: false,
+      isCustom: false
+    },
+    {
+      id: 'total-10',
+      name: 'Tenacious Ten',
+      description: 'Complete 10 tasks total for a bigger reward',
+      type: 'totalTasks',
+      targetNumber: 10,
+      rewards: { experience: 250, mana: 10, mind: 5 },
+      claimed: false,
+      isCustom: false
+    },
+    {
+      id: 'total-25',
+      name: 'Quarter Century',
+      description: 'Complete 25 tasks total for major rewards',
+      type: 'totalTasks',
+      targetNumber: 25,
+      rewards: { experience: 700, mana: 25, mind: 15 },
+      claimed: false,
+      isCustom: false
+    }
+  ];
+}
+
+// Returns merged goals for display: built-in goals with claimed status merged from wizard, plus custom goals
+export function getGoalsForWizard(wizard: Wizard | null, tasks: Task[]): Goal[] {
+  const completedCount = getCompletedTaskCount(tasks);
+  const builtin = getBuiltInGoals();
+  const storedGoals = (wizard && wizard.goals) ? wizard.goals : [];
+
+  // Map stored goals by id for quick lookup
+  const storedById: { [id: string]: Goal } = {};
+  storedGoals.forEach(g => { storedById[g.id] = g; });
+
+  // Merge built-in goals with stored claimed flags
+  const mergedBuiltins = builtin.map(bg => {
+    const stored = storedById[bg.id];
+    return {
+      ...bg,
+      claimed: stored ? stored.claimed : bg.claimed
+    } as Goal;
+  });
+
+  // Custom goals: include stored goals that are custom
+  const customGoals = storedGoals.filter(g => g.isCustom);
+
+  // For builtins, attach progress field dynamically (not stored in type) by returning as-is and letting UI compute progress
+  return [...mergedBuiltins, ...customGoals];
+}
+
+// Add a custom goal to a wizard and return updated wizard
+export function addCustomGoalToWizard(wizard: Wizard, name: string, description: string, rewards: { experience: number; mana?: number; mind?: number; }): Wizard {
+  const newGoal: Goal = {
+    id: `custom-goal-${Date.now()}-${Math.random().toString(36).substr(2,9)}`,
+    name,
+    description,
+    type: 'custom',
+    rewards,
+    createdAt: new Date(),
+    claimed: false,
+    isCustom: true
+  };
+
+  const updatedWizard = { ...wizard } as Wizard & { goals?: Goal[] };
+  updatedWizard.goals = [...(updatedWizard.goals || []), newGoal];
+  return updatedWizard;
+}
+
+// Claim a goal reward (built-in or custom) if progress meets target; returns updated wizard
+export function claimGoal(wizard: Wizard, goalId: string, tasks: Task[]): Wizard {
+  const goals = wizard.goals || [];
+  const completedCount = getCompletedTaskCount(tasks);
+
+  // Built-in goals
+  const builtin = getBuiltInGoals().find(g => g.id === goalId);
+  if (builtin) {
+    if (completedCount < builtin.targetNumber) return wizard; // not ready
+
+    // Apply rewards
+    const updatedWizard = { ...wizard } as Wizard & { goals?: Goal[] };
+    updatedWizard.experience += builtin.rewards.experience;
+    if (builtin.rewards.mana) {
+      updatedWizard.maxMana += builtin.rewards.mana;
+      updatedWizard.mana = Math.min(updatedWizard.mana + builtin.rewards.mana, updatedWizard.maxMana);
+    }
+    if (builtin.rewards.mind) {
+      updatedWizard.maxMind += builtin.rewards.mind;
+      updatedWizard.mind = Math.min(updatedWizard.mind + builtin.rewards.mind, updatedWizard.maxMind);
+    }
+
+    // Mark claimed in wizard.goals so it persists
+    updatedWizard.goals = [...(updatedWizard.goals || [])];
+    const existingIndex = updatedWizard.goals.findIndex(g => g.id === builtin.id);
+    const claimedEntry: Goal = { ...builtin, claimed: true };
+    if (existingIndex >= 0) {
+      updatedWizard.goals[existingIndex] = claimedEntry;
+    } else {
+      updatedWizard.goals.push(claimedEntry);
+    }
+
+    return checkLevelUp(updatedWizard);
+  }
+
+  // Custom goals: manual claim
+  const idx = goals.findIndex(g => g.id === goalId && g.isCustom);
+  if (idx === -1) return wizard;
+
+  const goal = goals[idx];
+  if (goal.claimed) return wizard;
+
+  // Apply rewards (manual claim)
+  const updatedWizard = { ...wizard } as Wizard & { goals?: Goal[] };
+  updatedWizard.experience += goal.rewards.experience;
+  if (goal.rewards.mana) {
+    updatedWizard.maxMana += goal.rewards.mana;
+    updatedWizard.mana = Math.min(updatedWizard.mana + goal.rewards.mana, updatedWizard.maxMana);
+  }
+  if (goal.rewards.mind) {
+    updatedWizard.maxMind += goal.rewards.mind;
+    updatedWizard.mind = Math.min(updatedWizard.mind + goal.rewards.mind, updatedWizard.maxMind);
+  }
+
+  updatedWizard.goals = [...(updatedWizard.goals || [])];
+  updatedWizard.goals[idx] = { ...updatedWizard.goals[idx], claimed: true };
+
+  return checkLevelUp(updatedWizard);
+}
+
+// Delete a custom goal
+export function deleteGoalFromWizard(wizard: Wizard, goalId: string): Wizard {
+  const updatedWizard = { ...wizard } as Wizard & { goals?: Goal[] };
+  updatedWizard.goals = (updatedWizard.goals || []).filter(g => g.id !== goalId);
+  return updatedWizard;
+}
+
+// ----------------------------------------------------
 
 // Create a new wizard character
 export function createWizard(name: string): Wizard {

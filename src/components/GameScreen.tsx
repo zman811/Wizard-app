@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Wizard, Task, Spell } from '../types';
 import WizardStats from './WizardStats';
 import TasksList from './TasksList';
+import GoalsList from './GoalsList';
 import SpellsList from './SpellsList';
 import BattleGrounds from './BattleGrounds';
 
@@ -25,6 +26,9 @@ interface GameScreenProps {
   ) => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask?: (taskId: string, updates: Partial<Task>) => void;
+  onClaimGoal: (goalId: string) => void;
+  onAddGoal: (name: string, description: string, rewards: { experience: number; mana?: number; mind?: number; }) => void;
+  onDeleteGoal: (goalId: string) => void;
 }
 
 const GameScreen: React.FC<GameScreenProps> = ({
@@ -34,9 +38,12 @@ const GameScreen: React.FC<GameScreenProps> = ({
   onCompleteTask,
   onAddTask,
   onDeleteTask,
-  onEditTask
+  onEditTask,
+  onClaimGoal,
+  onAddGoal,
+  onDeleteGoal
 }) => {
-  const [activeTab, setActiveTab] = useState<'tasks' | 'battlegrounds'>('tasks');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'battlegrounds' | 'goals'>('tasks');
 
   return (
     <>
@@ -49,6 +56,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
           <WizardStats wizard={wizard} />
           <div className="tabs">
             <button className={`tab-button ${activeTab === 'tasks' ? 'tab-active' : ''}`} onClick={() => setActiveTab('tasks')}>Tasks</button>
+            <button className={`tab-button ${activeTab === 'goals' ? 'tab-active' : ''}`} onClick={() => setActiveTab('goals')}>Goals</button>
             <button className={`tab-button ${activeTab === 'battlegrounds' ? 'tab-active' : ''}`} onClick={() => setActiveTab('battlegrounds')}>Battle Grounds</button>
           </div>
         </div>
@@ -65,6 +73,14 @@ const GameScreen: React.FC<GameScreenProps> = ({
               />
               <SpellsList spells={spells} unlockedSpells={wizard.spells} />
             </>
+          ) : activeTab === 'goals' ? (
+            <GoalsList
+              wizard={wizard}
+              tasks={tasks}
+              onClaimGoal={onClaimGoal}
+              onAddGoal={onAddGoal}
+              onDeleteGoal={onDeleteGoal}
+            />
           ) : (
             <BattleGrounds />
           )}

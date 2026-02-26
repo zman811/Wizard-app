@@ -1,14 +1,14 @@
 /* Stardew Valley-inspired Wizard Training App Global Styles */
 
 :root {
-  --primary-color: #8B4513; /* Saddle brown */
-  --secondary-color: #DAA520; /* Golden rod */
-  --accent-color: #32CD32; /* Lime green */
-  --background-color: #F5F5DC; /* Beige */
-  --panel-color: #FFF8DC; /* Cornsilk */
-  --text-color: #2F4F4F; /* Dark slate gray */
-  --border-color: #DEB887; /* Burlywood */
-  --shadow: rgba(0, 0, 0, 0.1);
+  --primary-color: #315acd; /* Dark blue */
+  --secondary-color: #3b82f6; /* Bright blue */
+  --accent-color: #60a5fa; /* Light blue */
+  --background-color: #0f172a; /* Very dark blue */
+  --panel-color: #1e293b; /* Dark slate blue */
+  --text-color: #e2e8f0; /* Light slate */
+  --border-color: #334155; /* Medium slate */
+  --shadow: rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -146,7 +146,6 @@ header h1 {
 }
 
 .tasks-section, .spells-section {
-  background: white;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 12px var(--shadow);
